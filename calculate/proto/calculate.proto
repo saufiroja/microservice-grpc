@@ -1,0 +1,27 @@
+syntax="proto3";
+
+package calculate;
+
+option go_package = ".";
+
+message CalculateRequest {
+  int32 num1 = 1;
+  int32 num2 = 2;
+}
+
+message CalculateResponse {
+  int32 result = 1;
+}
+
+message PrimesRequest {
+  int32 num = 1;
+}
+
+message PrimesResponse {
+  int32 result = 1;
+}
+
+service CalculateService {
+  rpc Calculate(CalculateRequest) returns (CalculateResponse) {}
+  rpc Primes(PrimesRequest) returns (stream PrimesResponse) {}
+}

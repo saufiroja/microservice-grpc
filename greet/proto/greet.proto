@@ -1,0 +1,21 @@
+syntax="proto3";
+
+package greet;
+
+option go_package = ".";
+
+message GreetRequest {
+  string first_name = 1;
+}
+
+message GreetResponse {
+  string result = 1;
+}
+
+service GreetService {
+  // unary
+  rpc Greet(GreetRequest) returns (GreetResponse) {}
+
+  // server streaming
+  rpc GreetManyTimes(GreetRequest) returns (stream GreetResponse) {}
+}
