@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -24,8 +25,9 @@ func main() {
 
 	c := pb.NewGreetServiceClient(conn)
 
-	doGreet(c) // <--- call the function
-	doGreetManyTimes(c)
+	// doGreet(c) // <--- call the function
+	// doGreetManyTimes(c)
+	doLongGreet(c)
 
 	log.Printf("Connected to %s", addr)
 }
@@ -71,4 +73,32 @@ func doGreetManyTimes(c pb.GreetServiceClient) {
 
 		log.Printf("GreetManyTimes: %s\n", msg.Result)
 	}
+}
+
+func doLongGreet(c pb.GreetServiceClient) {
+	log.Println("do longgreet was invoked")
+
+	req := []*pb.GreetRequest{
+		{FirstName: "saufi"},
+		{FirstName: "anang"},
+		{FirstName: "ikura"},
+	}
+
+	stream, err := c.LongGreet(context.Background())
+	if err != nil {
+		log.Fatalf("Error while calling LongGreet %v\n", err)
+	}
+
+	for _, v := range req {
+		log.Printf("Sending req: %v\n", req)
+		stream.Send(v)
+		time.Sleep(1 * time.Second)
+	}
+
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Error while receiving response from LongGreet: %v\n", err)
+	}
+
+	log.Printf("LongGreet: %s\n", res.Result)
 }
