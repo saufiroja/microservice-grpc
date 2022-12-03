@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"log"
 	"net"
 
@@ -59,4 +60,25 @@ func (s *Server) Primes(req *pb.PrimesRequest, stream pb.CalculateService_Primes
 	}
 
 	return nil
+}
+
+func (s *Server) Avg(stream pb.CalculateService_AvgServer) error {
+	log.Printf("Avg function was invoked with")
+
+	var res int32
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&pb.AvgResponse{
+				Result: res,
+			})
+		}
+
+		if err != nil {
+			log.Fatalf("Error while reading client stream: %v\n", err)
+		}
+
+		log.Printf("Receiving %v\n", req)
+	}
 }

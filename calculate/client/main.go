@@ -20,8 +20,9 @@ func main() {
 
 	c := pb.NewCalculateServiceClient(conn)
 
-	doCalculate(c)
-	doPrimes(c)
+	// doCalculate(c)
+	// doPrimes(c)
+	doAvg(c)
 
 	log.Printf("Connected to %s", ":50052")
 }
@@ -58,4 +59,38 @@ func doPrimes(c pb.CalculateServiceClient) {
 
 		log.Printf("Result: %d", res.Result)
 	}
+}
+
+func doAvg(c pb.CalculateServiceClient) {
+	log.Println("doAvg was invoked")
+
+	req := []*pb.AvgRequest{
+		{Num: 1},
+		{Num: 2},
+		{Num: 3},
+		{Num: 4},
+	}
+
+	stream, err := c.Avg(context.Background())
+	if err != nil {
+		log.Fatalf("Error while calling Avg %v\n", err)
+	}
+
+	var res float32
+	var angka int32
+	for _, v := range req {
+		res += float32(v.Num)
+		angka = v.Num
+
+	}
+
+	res /= float32(angka)
+
+	result, err := stream.CloseAndRecv()
+	result.Result = int32(res)
+	if err != nil {
+		log.Fatalf("Error while receiving response from avg: %v\n", err)
+	}
+
+	log.Println("Avg: ", res)
 }
