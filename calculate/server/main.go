@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -63,7 +64,7 @@ func (s *Server) Primes(req *pb.PrimesRequest, stream pb.CalculateService_Primes
 }
 
 func (s *Server) Avg(stream pb.CalculateService_AvgServer) error {
-	log.Printf("Avg function was invoked with")
+	log.Printf("Avg function was invoked")
 
 	var res int32
 
@@ -80,5 +81,42 @@ func (s *Server) Avg(stream pb.CalculateService_AvgServer) error {
 		}
 
 		log.Printf("Receiving %v\n", req)
+	}
+}
+
+func (s *Server) Max(stream pb.CalculateService_MaxServer) error {
+	log.Printf("Max function was invoked")
+	var max int32
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+
+		if err != nil {
+			log.Printf("Error while reading client streaming: %v\n", err)
+		}
+
+		number := req.Num
+		fmt.Println("num", number)
+
+		// NUMBER > MAX
+		// 	1 > 0 true
+		// 	5 > 1 true
+		// 	3 > 5 false
+		// 	6 > 5 true
+		// 	2 > 6 false
+		// 	10 > 6 true
+		if number > max {
+			max = number
+			err := stream.Send(&pb.AvgResponse{
+				Result: max,
+			})
+
+			if err != nil {
+				log.Fatalf("Error while sending data to client: %v\n", err)
+			}
+		}
 	}
 }

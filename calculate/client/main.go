@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"io"
 	"log"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -22,7 +24,8 @@ func main() {
 
 	// doCalculate(c)
 	// doPrimes(c)
-	doAvg(c)
+	// doAvg(c)
+	doMax(c)
 
 	log.Printf("Connected to %s", ":50052")
 }
@@ -93,4 +96,53 @@ func doAvg(c pb.CalculateServiceClient) {
 	}
 
 	log.Println("Avg: ", res)
+}
+
+func doMax(c pb.CalculateServiceClient) {
+	log.Println("doMax was invoked")
+
+	stream, err := c.Max(context.Background())
+	if err != nil {
+		log.Fatalf("Error while creating stream: %v\n", err)
+	}
+
+	req := []*pb.MaxRequest{
+		{Num: 1},
+		{Num: 5},
+		{Num: 3},
+		{Num: 6},
+		{Num: 2},
+		{Num: 10},
+	}
+
+	ch := make(chan struct{})
+
+	go func() {
+		for i, v := range req {
+			log.Printf("Send number: %v\n", req[i])
+			stream.Send(v)
+			time.Sleep(1 * time.Second)
+		}
+		stream.CloseSend()
+	}()
+
+	go func() {
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				log.Printf("Error while receiving: %v\n", err)
+				break
+			}
+
+			log.Printf("Received a new maximum: %v\n", res.Result)
+		}
+
+		close(ch)
+	}()
+
+	<-ch
 }
