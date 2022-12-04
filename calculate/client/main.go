@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/saufiroja/microservice-grpc/calculate/proto"
 )
@@ -25,7 +27,8 @@ func main() {
 	// doCalculate(c)
 	// doPrimes(c)
 	// doAvg(c)
-	doMax(c)
+	// doMax(c)
+	doSqrt(c, -10)
 
 	log.Printf("Connected to %s", ":50052")
 }
@@ -145,4 +148,32 @@ func doMax(c pb.CalculateServiceClient) {
 	}()
 
 	<-ch
+}
+
+func doSqrt(c pb.CalculateServiceClient, n int32) {
+	log.Println("doSqrt was invoked")
+
+	req := &pb.SqrtRequest{
+		Num: n,
+	}
+
+	res, err := c.Sqrt(context.Background(), req)
+
+	if err != nil {
+		e, ok := status.FromError(err)
+		if ok {
+			log.Printf("Error message from server: %s\n", e.Message())
+			log.Printf("Error code from server: %s\n", e.Code())
+
+			if e.Code() == codes.InvalidArgument {
+				log.Println("We probably sent a negative number!")
+				return
+			}
+		} else {
+			log.Fatalf("A non gRPC error: %v\n", err)
+		}
+	}
+
+	log.Printf("Sqrt: %f\n", res.Result)
+
 }

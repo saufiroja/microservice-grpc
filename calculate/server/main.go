@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net"
 
 	pb "github.com/saufiroja/microservice-grpc/calculate/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type Server struct {
@@ -119,4 +122,17 @@ func (s *Server) Max(stream pb.CalculateService_MaxServer) error {
 			}
 		}
 	}
+}
+
+func (s *Server) Sqrt(ctx context.Context, in *pb.SqrtRequest) (*pb.SqrtResponse, error) {
+	log.Printf("Sqrt was invoked with: %v\n", in)
+
+	number := in.Num
+	if number < 0 {
+		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("Received negative number: %d", number))
+	}
+
+	return &pb.SqrtResponse{
+		Result: math.Sqrt(float64(number)),
+	}, nil
 }
