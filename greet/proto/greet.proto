@@ -24,4 +24,6 @@ service GreetService {
 
   // BI Directional
   rpc GreetEveryone(stream GreetRequest) returns (stream GreetResponse){}
+
+  rpc GreetWithDeadline(GreetRequest) returns (GreetResponse){}
 }

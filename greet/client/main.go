@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/saufiroja/microservice-grpc/greet/proto"
 )
@@ -28,7 +30,8 @@ func main() {
 	// doGreet(c) // <--- call the function
 	// doGreetManyTimes(c)
 	// doLongGreet(c)
-	doGreetEveryone(c)
+	// doGreetEveryone(c)
+	doGreetWithDeadline(c, 1*time.Second)
 
 	log.Printf("Connected to %s", addr)
 }
@@ -148,4 +151,32 @@ func doGreetEveryone(c pb.GreetServiceClient) {
 	}()
 
 	<-ch
+}
+
+func doGreetWithDeadline(c pb.GreetServiceClient, timeout time.Duration) {
+	log.Println("doGreetWithDeadline was invoked")
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	req := &pb.GreetRequest{
+		FirstName: "oja",
+	}
+
+	res, err := c.GreetWithDeadline(ctx, req)
+	if err != nil {
+		e, ok := status.FromError(err)
+		if ok {
+			if e.Code() == codes.DeadlineExceeded {
+				log.Println("Deadline exceeded")
+				return
+			} else {
+				log.Fatalf("Unexpected gRPC error: %v\n", err)
+			}
+		} else {
+			log.Fatalf("A non gRPC error: %v\n", err)
+		}
+	}
+
+	log.Printf("GreetWithDeadline: %s\n", res.Result)
 }
